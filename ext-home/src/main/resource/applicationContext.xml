@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- xmlns:p ：自定义命名空间，p是该命名空间的简称 -->
+<!-- xmlns:xsi ：标准命名空间，用于指定自定义命名空间的Schema文件 -->
+<!-- xsi:schemaLocation ：为命名空间指定具体的Schema文件 -->
+<p:beans xmlns:c="http://www.springframework.org/schema/context" 
+		 xmlns:p="http://www.springframework.org/schema/beans" 
+ 		 xmlns:util="http://www.springframework.org/schema/util" 
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		 xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		 http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		 http://www.springframework.org/schema/util 
+ 		 http://www.springframework.org/schema/util/spring-util-4.3.xsd
+ 		 http://www.springframework.org/schema/context 
+ 		 http://www.springframework.org/schema/context/spring-context-4.3.xsd ">
+		 
+		 <c:component-scan base-package="dao"></c:component-scan>
+		 
+		 <!-- <c:property-placeholder location="test1.properties" file-encoding="UTF-8"/> -->
+		 
+		<p:bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+			<p:property name="locations">
+				<p:list value-type="java.lang.String">
+					<p:value>jdbc.properties</p:value>
+					<p:value>test.properties</p:value>
+					<p:value>test1.properties</p:value>
+				</p:list>
+			</p:property>
+			<p:property name="fileEncoding" value="UTF-8"></p:property>
+		</p:bean>
+		 
+		 <p:bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		 	<p:property name="driverClassName" value="${driver}"></p:property>
+		 	<p:property name="url" value="${url}"></p:property>
+		 	<p:property name="username" value="${user}"></p:property>
+		 	<p:property name="password" value="${password}"></p:property>
+		 </p:bean>
+		 
+		 <!-- 初始化数据源 -->
+		<p:bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+			<p:property name="dataSource" ref="dataSource"></p:property>
+		</p:bean>
+	
+		<!-- 注入jdbcTemplate -->
+		<p:bean id="loginDao" class="dao.LoginDao">
+			<p:property name="globalTest" value="${test}"></p:property>
+			<p:property name="jdbcTemplate" ref="jdbcTemplate"></p:property>
+			<p:property name="sysBeanAttr" value="#{sysConfig.beanAttr}"></p:property>
+		</p:bean>
+		
+		<p:bean id="sysConfig" class="system.SysConfig" init-method="initBeanAttr">
+			<p:property name="beanAttr" value="${bean_attr}"></p:property>
+		</p:bean>
+		
+		<!-- 前置增强和后置增强 -->
+		<p:bean id="target" class="aop.NaiveWaiter"></p:bean>
+		<p:bean id="beforeAdvice" class="aop.GreetingBeforeAdvice"></p:bean>
+		<p:bean id="afterAdvice" class="aop.GreetingAfterAdvice"></p:bean>
+		<p:bean id="waiter" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<!-- 指定代理的接口，多个用list标签 -->
+			<p:property name="proxyInterfaces" value="aop.Waiter"></p:property>
+			<!-- 使用的增强类 -->
+			<p:property name="interceptorNames" value="beforeAdvice,afterAdvice"></p:property>
+			<!-- 指定对哪个bean进行代理 -->
+			<p:property name="target" ref="target"></p:property>
+		</p:bean>
+		 
+		 <!-- 环绕增强 -->
+		 <p:bean id="greetingAround" class="aop.GreetingInterceptor"></p:bean>
+		 <p:bean id="waiterAround" class="org.springframework.aop.framework.ProxyFactoryBean">
+			<!-- 指定代理的接口，多个用list标签 -->
+			<p:property name="proxyInterfaces" value="aop.Waiter"></p:property>
+			<!-- 使用的增强类 -->
+			<p:property name="interceptorNames" value="greetingAround"></p:property>
+			<!-- 指定对哪个bean进行代理 -->
+			<p:property name="target" ref="target"></p:property>
+		</p:bean>
+		 
+</p:beans>
